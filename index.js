@@ -30,12 +30,11 @@ client.on('interactionCreate', async interaction => {
 });
 
 client.on('guildMemberAdd', async (member) => {
-    console.log('yes okay')
     const chnl = member.guild.channels.cache.get(mainHall);
     chnl.send(`Welcome to Vidalia, ${member.displayName}. Tell us about yourself here.`);
 });
 
 client.on("messageCreate", async message => {
     if(message.author.bot) return;
-    parseMessage(message);
+    parseMessage(message, client);
 });
