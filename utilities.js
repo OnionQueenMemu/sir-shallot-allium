@@ -2,7 +2,7 @@ const axios = require('axios');
 const fs = require('fs');
 const { badwords, responses, colors, checks, anime } = require("./data.json");
 const { guildId } = require('./config.json');
-const { sortObj, capitalize, generateDetails, randomNum, contains, readJsonFile, showAnimeDetails, showAnimeList, addAnime } = require('./helpers');
+const { sortObj, capitalize, generateDetails, randomNum, contains, readJsonFile, showAnimeDetails, showAnimeList, addAnime, addAnimeDetail } = require('./helpers');
 
 const getCuteThing = async () => {
     const index = Math.floor(Math.random() * 2);
@@ -132,44 +132,7 @@ const parseMessage = async (message, client) => {
     }
 
     if (contains(content, "add detail")) {
-        try {
-            const validDetails = ['rating', 'synopsis', 'category', 'review']
-            const animeData = content.split(' -');
-            const animeTitleKey = capitalize(animeData[1]);
-            const detailKey = animeData[2]
-            const detailData = animeData[3];
-            if (!validDetails.includes(detailKey)) {
-                message.channel.send(`Cannot add ${detailKey} to ${animeTitleKey}. Valid details to add include 'rating', 'synopsis', 'review', and 'category'.`);
-            } else if (detailKey === 'rating' && Number(detailData) < 1 || Number(detailData) > 10) {
-                message.channel.send(`Cannot add ${detailKey} to ${animeTitleKey}. Valid ratings must be between 1 and 10.`);
-            } else {
-                fs.readFile('data.json', 'utf-8', (err, data) => {
-                    if (err) {
-                        message.channel.send(`Failed to update the anime due to: ${err.message}`);
-                    } else {
-                        const obj = JSON.parse(data);
-                        const anime = obj.anime[animeTitleKey];
-                        if (!anime) {
-                            message.channel.send(`Anime titled, "${animeTitleKey}", has not been added to the list!`);
-                        } else if (obj.anime[animeTitleKey][detailKey]) {
-                            message.channel.send(`${animeTitle} already has a ${detailKey}.`);
-                        } else {
-                            obj.anime[animeTitleKey][capitalize(detailKey)] = detailData;
-                            const json = JSON.stringify(obj);
-                            fs.writeFile('data.json', json, 'utf-8', (err, result) => {
-                                if (err) {
-                                    message.channel.send(`Failed to the anime to the list due to: ${err.message}`);
-                                } else {
-                                    message.channel.send(`${detailKey} has been added to ${animeTitleKey}.`);
-                                }
-                            });
-                        }
-                    }
-                })
-            }
-        } catch {
-            message.channel.send("Failed to add the detail to the anime to the list. Are you sure you formatted the request properly? EX: 'add detail -Naruto -rating -6.9'");
-        }
+        readJsonFile(addAnimeDetail, message, content);
     }
 }
 
