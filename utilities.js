@@ -1,6 +1,8 @@
 const axios = require('axios');
-const { badwords, responses, colors } = require("./data.json");
+const fs = require('fs');
+const { badwords, responses, colors, checks, anime } = require("./data.json");
 const { guildId } = require('./config.json');
+const { sortObj, capitalize, generateDetails, randomNum, contains, readJsonFile, showAnimeDetails, showAnimeList, addAnime } = require('./helpers');
 
 const getCuteThing = async () => {
     const index = Math.floor(Math.random() * 2);
@@ -16,16 +18,10 @@ const getCuteThing = async () => {
 
 }
 
-const contains = (message, word) => {
-    return message.includes(word)
-}
-
-const randomNum = (max) => Math.floor(Math.random() * max);
-
 const parseMessage = async (message, client) => {
     const content = message.content.toLocaleLowerCase();
 
-    for(let i = 0; i < badwords.length; i++){
+    for (let i = 0; i < badwords.length; i++){
         const badWord = badwords[i];
         if(contains(content, badWord) || 
             contains(content.split('-').join(""), badWord) ||
@@ -43,36 +39,37 @@ const parseMessage = async (message, client) => {
         }
     }
 
-    if(contains(content, 'bone')){
+    if (contains(content, 'bone')){
         message.channel.send({files: ['./images/bone.jpg']});
     }
 
-    if(contains(content, 'naruto')){
+    if (contains(content, 'naruto')){
         message.channel.send({content:'SASUKEEEEEE!!!!', tts: true});
     }
 
-    if(contains(content, 'sasuke')) {
-        message.channel.send({content: 'NARUTOOOO!!!!!', tts:true});
+    if (contains(content, 'sasuke')) {
+        message.channel.send({content: 'NARUTOOOO!!!!!', tts: true});
     }
 
-    if(contains(content, 'omg') || contains(content, 'oh my god')){
+    if (contains(content, 'omg') || contains(content, 'oh my god')){
         message.channel.send({files: ['./images/jojo-oh-my-god.gif']});
     }
 
-    if(contains(content, 'all star')) {
+    if (contains(content, 'all star')) {
         message.channel.send({content: `Somebody once told me they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming and they don't stop coming `, tts: true});
     } 
-    if(contains(content, 'bees')) {
+
+    if (contains(content, 'bees')) {
         message.channel.send({files: ['./images/bees.gif']})
     } 
 
-    if(contains(content, 'help me choose between')) {
+    if (contains(content, 'help me choose between')) {
         const stepOne = content.split('help me choose between').join('');
         const list = stepOne.split(',');
         message.channel.send(list[randomNum(list.length)]);
     }
 
-    if(contains(content, "my pronouns are")) {
+    if (contains(content, "my pronouns are")) {
         const step1 = content.split('my pronouns are');
         const step2 = step1.join('').trim().split('/');
         const colorChoice = step2.pop().toUpperCase();
@@ -90,14 +87,89 @@ const parseMessage = async (message, client) => {
         const theirRole = await guild.roles.create(role);
         guild.members.cache.get(message.author.id).roles.add(theirRole)
     }
-    if(contains(content, "how do i add pronouns")){
+
+    if (contains(content, "how do i add pronouns")){
         message.channel.send("You may use any pronouns you want, however you must provide a valid color or I will set it to a default color.");
         message.channel.send("Here is an example: 'My pronouns are she/her/WHITE'");
         message.channel.send(`Here is a list of valid colors, ${colors.join(', ')}`)
     }
 
-    if(contains(content, "praise satan") || contains(content, "hail satan")) {
+    if (contains(content, "praise satan") || contains(content, "hail satan")) {
         message.channel.send({files: ['./images/satan.gif']});
+    }
+
+    if (contains(content, "wow")) {
+        message.channel.send({files: ['./images/wow.gif']});
+    }
+
+    if (contains(content, "duel")) {
+        message.channel.send({files: ['./sound/duel.wav']});
+    }
+
+    if (contains(content, "elden ring")) {
+        message.channel.send("Did someone just mention the greatest game of all time?");
+    }
+
+    if (contains(content, "good bot")) {
+        message.channel.send("Good human. *head pat*");
+    }
+
+    if (contains(content, "explain check")) {
+        const skillCheck = content.split(' -')[1];
+        message.channel.send(checks[skillCheck]);
+    }
+
+    if(contains(content, "list my anime")) {
+        readJsonFile(showAnimeList, message, content);
+    }
+
+    if (contains(content, "show anime details")) {
+        readJsonFile(showAnimeDetails, message, content);
+    }
+
+    if (contains(content, "add anime")) {
+        readJsonFile(addAnime, message, content);
+    }
+
+    if (contains(content, "add detail")) {
+        try {
+            const validDetails = ['rating', 'synopsis', 'category', 'review']
+            const animeData = content.split(' -');
+            const animeTitleKey = capitalize(animeData[1]);
+            const detailKey = animeData[2]
+            const detailData = animeData[3];
+            if (!validDetails.includes(detailKey)) {
+                message.channel.send(`Cannot add ${detailKey} to ${animeTitleKey}. Valid details to add include 'rating', 'synopsis', 'review', and 'category'.`);
+            } else if (detailKey === 'rating' && Number(detailData) < 1 || Number(detailData) > 10) {
+                message.channel.send(`Cannot add ${detailKey} to ${animeTitleKey}. Valid ratings must be between 1 and 10.`);
+            } else {
+                fs.readFile('data.json', 'utf-8', (err, data) => {
+                    if (err) {
+                        message.channel.send(`Failed to update the anime due to: ${err.message}`);
+                    } else {
+                        const obj = JSON.parse(data);
+                        const anime = obj.anime[animeTitleKey];
+                        if (!anime) {
+                            message.channel.send(`Anime titled, "${animeTitleKey}", has not been added to the list!`);
+                        } else if (obj.anime[animeTitleKey][detailKey]) {
+                            message.channel.send(`${animeTitle} already has a ${detailKey}.`);
+                        } else {
+                            obj.anime[animeTitleKey][capitalize(detailKey)] = detailData;
+                            const json = JSON.stringify(obj);
+                            fs.writeFile('data.json', json, 'utf-8', (err, result) => {
+                                if (err) {
+                                    message.channel.send(`Failed to the anime to the list due to: ${err.message}`);
+                                } else {
+                                    message.channel.send(`${detailKey} has been added to ${animeTitleKey}.`);
+                                }
+                            });
+                        }
+                    }
+                })
+            }
+        } catch {
+            message.channel.send("Failed to add the detail to the anime to the list. Are you sure you formatted the request properly? EX: 'add detail -Naruto -rating -6.9'");
+        }
     }
 }
 
