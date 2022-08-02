@@ -2,7 +2,7 @@ const axios = require('axios');
 const fs = require('fs');
 const { badwords, responses, colors, checks, anime } = require("./data.json");
 const { guildId } = require('./config.json');
-const { sortObj, capitalize, generateDetails, randomNum, contains, readJsonFile, showAnimeDetails, showAnimeList, addAnime, addAnimeDetail } = require('./helpers');
+const { sortObj, capitalize, generateDetails, randomNum, contains, readJsonFile, showAnimeDetails, showAnimeList, addAnime, addAnimeDetail, showUnwatched } = require('./helpers');
 
 const getCuteThing = async () => {
     const index = Math.floor(Math.random() * 2);
@@ -119,8 +119,12 @@ const parseMessage = async (message, client) => {
         message.channel.send(checks[skillCheck]);
     }
 
-    if(contains(content, "list my anime")) {
+    if(contains(content, "list anime")) {
         readJsonFile(showAnimeList, message, content);
+    }
+
+    if(contains(content, "list unwatched anime")) {
+        readJsonFile(showUnwatched, message, content);
     }
 
     if (contains(content, "show anime details")) {

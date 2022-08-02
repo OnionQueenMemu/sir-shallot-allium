@@ -41,6 +41,13 @@ const showAnimeList = (content, message, obj) => {
     message.channel.send(list);
 }
 
+const showUnwatched = (content, message, obj) => {
+    const list = '```' + Object.keys(obj.anime).filter((animeKey) => {
+        return obj.anime[animeKey].watched === false;
+    }).join('\n') + '```';
+    message.channel.send(list);
+}
+
 const addAnime = (content, message, obj) => {
     const animeTitleData = content.split('add anime ')[1];
     const animeTitle = capitalize(animeTitleData);
@@ -51,7 +58,7 @@ const addAnime = (content, message, obj) => {
         if (obj.anime[animeTitle]) {
             message.channel.send(`${animeTitle} has already been added.`);
         } else {
-            obj.anime[animeTitle] = { review: "", category: "", synopsis: "", rating: ""};
+            obj.anime[animeTitle] = { review: "", category: "", synopsis: "", rating: "", watched: false };
             obj.anime = sortObj(obj.anime);
             const json = JSON.stringify(obj);
             writeJsonFile(`${animeTitle} added.`, json, message);
@@ -117,5 +124,6 @@ module.exports = {
     showAnimeDetails,
     showAnimeList,
     addAnime,
-    addAnimeDetail
+    addAnimeDetail,
+    showUnwatched
 }
